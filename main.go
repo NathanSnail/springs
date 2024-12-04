@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -172,6 +173,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		p1 := g.nodes[spring.l].pos.Mul(RENDER_SCALE)
 		p2 := g.nodes[spring.r].pos.Mul(RENDER_SCALE)
 		vector.StrokeLine(screen, p1.X, p1.Y, p2.X, p2.Y, 1, color.White, false)
+	}
+	for i := range g.nodes {
+		node := g.nodes[i]
+		vector.DrawFilledCircle(screen, node.pos.X, node.pos.Y, 3, color.RGBA{R: 255, G: 255, B: 0, A: 255}, false)
 	}
 }
 
