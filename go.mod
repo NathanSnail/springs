@@ -1,4 +1,4 @@
-module spring
+module github.com/NathanSnail/springs
 
 go 1.23.3
 
