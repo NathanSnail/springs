@@ -21,7 +21,7 @@ const SPATIAL_SIZE = W / SPATIAL_W
 const REPEL_R = SPATIAL_SIZE * SPATIAL_RAD
 const REPEL_FORCE = 3
 const NODE_COUNT = 64
-const SPRING_COUNT = 63
+const SPRING_COUNT = 64
 const DT = 0.001
 const DRAG = 0.99
 
@@ -173,10 +173,14 @@ func main() {
 		nodes[i].pos = vec2{X: W * rng.Float32(), Y: H * rng.Float32()}
 	}
 	for i := range SPRING_COUNT {
-		/*springs[i].l = node_id(rng.Int31() % NODE_COUNT)
-		springs[i].r = node_id(rng.Int31() % NODE_COUNT)*/
-		springs[i].l = node_id(0)
-		springs[i].r = node_id(i + 1)
+		// /*
+		springs[i].l = node_id(rng.Int31() % NODE_COUNT)
+		springs[i].r = node_id(rng.Int31() % NODE_COUNT)
+		// */
+		/*
+			springs[i].l = node_id(0)
+			springs[i].r = node_id(i + 1)
+		*/
 	}
 	ebiten.SetWindowSize(W, H)
 	ebiten.SetWindowTitle("Hello, World!")
