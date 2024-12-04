@@ -14,12 +14,15 @@ import (
 
 const W = 720.0
 const H = 480.0
+const RENDER_SCALE = 2.0
 const SPATIAL_W = 32
 const SPATIAL_H = 18
 const SPATIAL_RAD = 2
 const SPATIAL_SIZE = W / SPATIAL_W
 const REPEL_R = SPATIAL_SIZE * SPATIAL_RAD
 const REPEL_FORCE = 3
+const CENTRE_FORCE = 0.03
+const CURSOR_FORCE = -10000
 const NODE_COUNT = 64
 const SPRING_COUNT = 64
 const DT = 0.001
@@ -123,6 +126,10 @@ func (g *Game) Update() error {
 		sy := clamp(int(pos.Y/H), 0, SPATIAL_H-1)
 		g.spatial_map[sx][sy] = append(g.spatial_map[sx][sy], node.pos)
 	}
+	lmb := ebiten.IsMouseButtonPressed(ebiten.MouseButton0)
+	cx, cy := ebiten.CursorPosition()
+	cpos := vec2{X: float32(cx) / RENDER_SCALE, Y: float32(cy) / RENDER_SCALE}
+	fmt.Println(cpos)
 	for i := range g.nodes {
 		node := &g.nodes[i]
 		pos := node.pos
@@ -146,6 +153,13 @@ func (g *Game) Update() error {
 				}
 			}
 		}
+		node.vel = node.vel.Add(vec2{X: W / 2, Y: H / 2}.Sub(node.pos).Mul(CENTRE_FORCE))
+		if lmb {
+			delta := cpos.Sub(node.pos)
+			mag := min(1, 1/delta.Mag())
+			delta = delta.WithMag(mag * mag)
+			node.vel = node.vel.Add(delta.Mul(CURSOR_FORCE))
+		}
 		node.pos = node.pos.Add(node.vel.Mul(DT))
 		node.vel = node.vel.Mul(DRAG)
 	}
@@ -155,14 +169,14 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	for i := range g.springs {
 		spring := g.springs[i]
-		p1 := g.nodes[spring.l].pos
-		p2 := g.nodes[spring.r].pos
+		p1 := g.nodes[spring.l].pos.Mul(RENDER_SCALE)
+		p2 := g.nodes[spring.r].pos.Mul(RENDER_SCALE)
 		vector.StrokeLine(screen, p1.X, p1.Y, p2.X, p2.Y, 1, color.White, false)
 	}
 }
 
 func (g *Game) Layout(outsideWidth int, outsideHeight int) (screenWidth int, screenHeight int) {
-	return W, H
+	return W * RENDER_SCALE, H * RENDER_SCALE
 }
 
 func main() {
@@ -182,8 +196,8 @@ func main() {
 			springs[i].r = node_id(i + 1)
 		*/
 	}
-	ebiten.SetWindowSize(W, H)
-	ebiten.SetWindowTitle("Hello, World!")
+	ebiten.SetWindowSize(W*RENDER_SCALE, H*RENDER_SCALE)
+	ebiten.SetWindowTitle("Spring Toy")
 	if err := ebiten.RunGame(&Game{nodes: *nodes, springs: *springs}); err != nil {
 		log.Fatal(err)
 	}
