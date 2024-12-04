@@ -171,11 +171,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		spring := g.springs[i]
 		p1 := g.nodes[spring.l].pos.Mul(RENDER_SCALE)
 		p2 := g.nodes[spring.r].pos.Mul(RENDER_SCALE)
-		vector.StrokeLine(screen, p1.X, p1.Y, p2.X, p2.Y, 1, color.White, false)
+		vector.StrokeLine(screen, p1.X, p1.Y, p2.X, p2.Y, 1.2, color.White, true)
 	}
 	for i := range g.nodes {
 		node := g.nodes[i]
-		vector.DrawFilledCircle(screen, node.pos.X*RENDER_SCALE, node.pos.Y*RENDER_SCALE, 3, color.RGBA{R: 255, G: 255, B: 0, A: 255}, false)
+		vector.DrawFilledCircle(screen, node.pos.X*RENDER_SCALE, node.pos.Y*RENDER_SCALE, 3, color.RGBA{R: 255, G: 255, B: 0, A: 255}, true)
 	}
 }
 
