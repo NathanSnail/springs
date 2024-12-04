@@ -23,8 +23,8 @@ const REPEL_R = SPATIAL_SIZE * SPATIAL_RAD
 const REPEL_FORCE = 3
 const CENTRE_FORCE = 0.03
 const CURSOR_FORCE = -10000
-const NODE_COUNT = 64
-const SPRING_COUNT = 128
+const NODE_COUNT = 1536
+const SPRING_COUNT = NODE_COUNT * 2
 const DT = 0.001
 const DRAG = 0.99
 
@@ -41,6 +41,7 @@ type vec2 struct {
 type node struct {
 	pos vec2
 	vel vec2
+	col color.RGBA
 }
 
 type node_id int
@@ -106,6 +107,7 @@ func clamp(v, lower, upper int) int {
 }
 
 func (g *Game) Update() error {
+	fmt.Println(ebiten.ActualTPS())
 	for i := range g.springs {
 		spring := g.springs[i]
 		n1 := &g.nodes[spring.l]
@@ -122,19 +124,18 @@ func (g *Game) Update() error {
 	for i := range g.nodes {
 		node := &g.nodes[i]
 		pos := node.pos
-		sx := clamp(int(pos.X/W), 0, SPATIAL_W-1)
-		sy := clamp(int(pos.Y/H), 0, SPATIAL_H-1)
+		sx := clamp(int(pos.X/W*SPATIAL_W), 0, SPATIAL_W-1)
+		sy := clamp(int(pos.Y/H*SPATIAL_H), 0, SPATIAL_H-1)
 		g.spatial_map[sx][sy] = append(g.spatial_map[sx][sy], node.pos)
 	}
 	lmb := ebiten.IsMouseButtonPressed(ebiten.MouseButton0)
 	cx, cy := ebiten.CursorPosition()
 	cpos := vec2{X: float32(cx) / RENDER_SCALE, Y: float32(cy) / RENDER_SCALE}
-	fmt.Println(cpos)
 	for i := range g.nodes {
 		node := &g.nodes[i]
 		pos := node.pos
-		sx := clamp(int(pos.X/W), 0, SPATIAL_W-1)
-		sy := clamp(int(pos.Y/H), 0, SPATIAL_H-1)
+		sx := clamp(int(pos.X/W*SPATIAL_W), 0, SPATIAL_W-1)
+		sy := clamp(int(pos.Y/H*SPATIAL_H), 0, SPATIAL_H-1)
 		for _dx := range SPATIAL_RAD*2 + 1 {
 			for _dy := range SPATIAL_RAD*2 + 1 {
 				dx := _dx - SPATIAL_RAD
@@ -144,6 +145,8 @@ func (g *Game) Update() error {
 				if px < 0 || px >= SPATIAL_W || py < 0 || py >= SPATIAL_H {
 					continue
 				}
+				node.col.R = uint8(float32(px) * (255.0 / SPATIAL_W))
+				node.col.G = uint8(float32(py) * (255.0 / SPATIAL_H))
 				spatial_group := g.spatial_map[px][py]
 				for i := range spatial_group {
 					gn := spatial_group[i]
@@ -163,6 +166,11 @@ func (g *Game) Update() error {
 		node.pos = node.pos.Add(node.vel.Mul(DT))
 		node.vel = node.vel.Mul(DRAG)
 	}
+	/*for x := range g.spatial_map {
+		for y := range g.spatial_map[x] {
+			fmt.Println(x, y, len(g.spatial_map[x][y]))
+		}
+	}*/
 	return nil
 }
 
@@ -175,7 +183,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	for i := range g.nodes {
 		node := g.nodes[i]
-		vector.DrawFilledCircle(screen, node.pos.X*RENDER_SCALE, node.pos.Y*RENDER_SCALE, 3, color.RGBA{R: 255, G: 255, B: 0, A: 255}, true)
+		vector.DrawFilledCircle(screen, node.pos.X*RENDER_SCALE, node.pos.Y*RENDER_SCALE, 3, node.col, true)
 	}
 }
 
@@ -183,11 +191,20 @@ func (g *Game) Layout(outsideWidth int, outsideHeight int) (screenWidth int, scr
 	return W * RENDER_SCALE, H * RENDER_SCALE
 }
 
+func NonOverFlowAdd(a, b uint8) uint8 {
+	r := uint16(a) + uint16(b)
+	if r > 255 {
+		return 255
+	}
+	return uint8(r)
+}
+
 func main() {
 	nodes := new([NODE_COUNT]node)
 	springs := new([SPRING_COUNT]spring)
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
 	for i := range NODE_COUNT {
+		nodes[i].col.A = 255
 		nodes[i].pos = vec2{X: W * rng.Float32(), Y: H * rng.Float32()}
 	}
 	rng_cons := SPRING_COUNT - NODE_COUNT
@@ -204,6 +221,11 @@ func main() {
 	for i := range NODE_COUNT {
 		springs[i+rng_cons].l = node_id(i)
 		springs[i+rng_cons].r = node_id(rng.Int31() % NODE_COUNT)
+	}
+	for i := range SPRING_COUNT {
+		spring := springs[i]
+		nodes[spring.l].col.B = NonOverFlowAdd(nodes[spring.l].col.B, 30)
+		nodes[spring.r].col.B = NonOverFlowAdd(nodes[spring.r].col.B, 30)
 	}
 	ebiten.SetWindowSize(W*RENDER_SCALE, H*RENDER_SCALE)
 	ebiten.SetWindowTitle("Spring Toy")
