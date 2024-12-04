@@ -14,11 +14,14 @@ import (
 
 const W = 720.0
 const H = 480.0
-const SPATIAL_W = 64
-const SPATIAL_H = 36
-const REPEL_R = W / SPATIAL_W
-const NODE_COUNT = 4
-const SPRING_COUNT = 3
+const SPATIAL_W = 32
+const SPATIAL_H = 18
+const SPATIAL_RAD = 2
+const SPATIAL_SIZE = W / SPATIAL_W
+const REPEL_R = SPATIAL_SIZE * SPATIAL_RAD
+const REPEL_FORCE = 3
+const NODE_COUNT = 64
+const SPRING_COUNT = 63
 const DT = 0.001
 const DRAG = 0.99
 
@@ -125,10 +128,10 @@ func (g *Game) Update() error {
 		pos := node.pos
 		sx := clamp(int(pos.X/W), 0, SPATIAL_W-1)
 		sy := clamp(int(pos.Y/H), 0, SPATIAL_H-1)
-		for _dx := range 3 {
-			for _dy := range 3 {
-				dx := _dx - 1
-				dy := _dy - 1
+		for _dx := range SPATIAL_RAD*2 + 1 {
+			for _dy := range SPATIAL_RAD*2 + 1 {
+				dx := _dx - SPATIAL_RAD
+				dy := _dy - SPATIAL_RAD
 				px := sx + dx
 				py := sy + dy
 				if px < 0 || px >= SPATIAL_W || py < 0 || py >= SPATIAL_H {
@@ -138,13 +141,11 @@ func (g *Game) Update() error {
 				for i := range spatial_group {
 					gn := spatial_group[i]
 					diff := node.pos.Sub(gn)
-					//use(diff)
-					fmt.Println(diff, diff.Mag())
-					node.vel = node.vel.Add(diff.WithMag(REPEL_R - diff.Mag()).Mul(-0.1))
+					force := diff.WithMag(max(0, (REPEL_R-diff.Mag())*REPEL_FORCE))
+					node.vel = node.vel.Add(force)
 				}
 			}
 		}
-		node.vel = node.vel.Add(vec2{X: W / 2, Y: H / 2}.Sub(node.pos).Mul(2))
 		node.pos = node.pos.Add(node.vel.Mul(DT))
 		node.vel = node.vel.Mul(DRAG)
 	}
