@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
@@ -176,7 +175,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 	for i := range g.nodes {
 		node := g.nodes[i]
-		vector.DrawFilledCircle(screen, node.pos.X, node.pos.Y, 3, color.RGBA{R: 255, G: 255, B: 0, A: 255}, false)
+		vector.DrawFilledCircle(screen, node.pos.X*RENDER_SCALE, node.pos.Y*RENDER_SCALE, 3, color.RGBA{R: 255, G: 255, B: 0, A: 255}, false)
 	}
 }
 
