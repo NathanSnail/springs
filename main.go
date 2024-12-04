@@ -24,7 +24,7 @@ const REPEL_FORCE = 3
 const CENTRE_FORCE = 0.03
 const CURSOR_FORCE = -10000
 const NODE_COUNT = 64
-const SPRING_COUNT = 64
+const SPRING_COUNT = 128
 const DT = 0.001
 const DRAG = 0.99
 
@@ -98,7 +98,7 @@ func (v vec2) WithMag(mag float32) vec2 {
 }
 
 func (p vec2) String() string {
-	return fmt.Sprintf("(%d, %d)", p.X, p.Y)
+	return fmt.Sprintf("(%f, %f)", p.X, p.Y)
 }
 
 func clamp(v, lower, upper int) int {
@@ -190,7 +190,8 @@ func main() {
 	for i := range NODE_COUNT {
 		nodes[i].pos = vec2{X: W * rng.Float32(), Y: H * rng.Float32()}
 	}
-	for i := range SPRING_COUNT {
+	rng_cons := SPRING_COUNT - NODE_COUNT
+	for i := range rng_cons {
 		// /*
 		springs[i].l = node_id(rng.Int31() % NODE_COUNT)
 		springs[i].r = node_id(rng.Int31() % NODE_COUNT)
@@ -199,6 +200,10 @@ func main() {
 			springs[i].l = node_id(0)
 			springs[i].r = node_id(i + 1)
 		*/
+	}
+	for i := range NODE_COUNT {
+		springs[i+rng_cons].l = node_id(i)
+		springs[i+rng_cons].r = node_id(rng.Int31() % NODE_COUNT)
 	}
 	ebiten.SetWindowSize(W*RENDER_SCALE, H*RENDER_SCALE)
 	ebiten.SetWindowTitle("Spring Toy")
